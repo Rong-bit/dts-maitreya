@@ -1,20 +1,24 @@
 # 妙華蓮華經 - 佛經閱讀系統
 
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/Rong-bit/dts-maitreya)
-[![🌐 線上版本](https://img.shields.io/badge/🌐-線上版本-green)](https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec)
+<div align="center">
 
-這是一個基於 Google Apps Script 開發的佛經閱讀與翻譯系統，提供經文閱讀、語音朗讀、同音字顯示、AI 翻譯等功能。
+## 🌐 [**點擊這裡立即訪問線上版本** →](https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec)
 
-## 🔗 快速訪問
+[![訪問線上版本](https://img.shields.io/badge/🌐-訪問線上版本-00AA00?style=for-the-badge&logo=google&logoColor=white)](https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec)
+[![GitHub 倉庫](https://img.shields.io/badge/GitHub-源代碼-blue?style=for-the-badge&logo=github)](https://github.com/Rong-bit/dts-maitreya)
 
-> **⚠️ 注意**：GitHub 倉庫只提供源代碼，無法直接運行。要使用應用程式，請訪問以下線上版本：
-
-### 🌐 [點擊這裡訪問線上版本 →](https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec)
+> **⚠️ 重要提示**：此 GitHub 倉庫只提供源代碼。要使用完整的應用程式功能，請點擊上方按鈕訪問線上版本（部署於 Google Apps Script）。
 
 ---
 
-- **📦 GitHub 倉庫（源代碼）**：https://github.com/Rong-bit/dts-maitreya
-- **🌐 線上版本（實際應用）**：https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec
+</div>
+
+這是一個基於 Google Apps Script 開發的佛經閱讀與翻譯系統，提供經文閱讀、語音朗讀、同音字顯示、AI 翻譯等功能。
+
+### 📍 快速連結
+
+- **🌐 [線上版本（推薦）](https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec)** - 完整的應用程式，可直接使用
+- **📦 [GitHub 倉庫](https://github.com/Rong-bit/dts-maitreya)** - 源代碼和文檔
 
 ## 專案結構
 
