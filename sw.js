@@ -157,6 +157,43 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
+  // 對於 Apps Script URL，使用網路優先策略，失敗時使用快取
+  if (event.request.url.includes('script.google.com/macros/s')) {
+    event.respondWith(
+      fetch(event.request, {
+        cache: 'no-store',
+        credentials: 'include',
+        mode: 'no-cors'  // 避免 CORS 問題
+      }).then(function(networkResponse) {
+        // 即使 response 可能是不透明的，也嘗試快取
+        if (networkResponse && networkResponse.type !== 'opaque') {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return networkResponse;
+      }).catch(function() {
+        // 如果網路請求失敗，嘗試從快取中獲取
+        return caches.match(event.request).then(function(cachedResponse) {
+          if (cachedResponse) {
+            console.log('[Service Worker] 從快取返回 Apps Script 響應');
+            return cachedResponse;
+          }
+          // 如果快取也沒有，返回錯誤
+          return new Response('無法連接到服務器，且無可用快取', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: new Headers({
+              'Content-Type': 'text/html; charset=utf-8'
+            })
+          });
+        });
+      })
+    );
+    return;
+  }
+
   // 對於其他請求（如 API 請求），使用網路優先，失敗時不返回快取
   event.respondWith(
     fetch(event.request).catch(function() {
