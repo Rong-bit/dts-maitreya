@@ -27,44 +27,19 @@
       flex-direction: column;
     }
     
-    /* 標題區域 */
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 30px 20px;
-      text-align: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .header h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-      font-weight: 700;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .header p {
-      font-size: 1.2em;
-      opacity: 0.95;
-    }
-    
     /* 應用程式框架容器 */
     .app-container {
       flex: 1;
-      padding: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
+      padding: 0;
       width: 100%;
+      height: 100vh;
     }
     
     /* 應用程式框架 */
     .app-frame {
       width: 100%;
-      height: calc(100vh - 200px);
-      min-height: 800px;
+      height: 100vh;
       border: none;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
       background: white;
     }
     
@@ -92,26 +67,8 @@
     
     /* 響應式設計 */
     @media (max-width: 768px) {
-      .header h1 {
-        font-size: 2em;
-      }
-      
-      .header p {
-        font-size: 1em;
-      }
-      
       .app-frame {
-        height: calc(100vh - 160px);
-        min-height: 600px;
-      }
-      
-      .app-container {
-        padding: 10px;
-      }
-      
-      .access-button {
-        font-size: 1em;
-        padding: 12px 30px;
+        height: 100vh;
       }
     }
     
@@ -128,12 +85,6 @@
 </head>
 <body>
   <div class="page-container">
-    <!-- 標題區域 -->
-    <div class="header">
-      <h1>🌐 妙華蓮華經 - 佛經閱讀系統</h1>
-      <p>基於 Google Apps Script 開發的智能佛經閱讀與翻譯系統</p>
-    </div>
-    
     <!-- 應用程式容器 -->
     <div class="app-container">
       <iframe 
