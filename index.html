@@ -1413,7 +1413,11 @@
 
   <script>
     // 預載入的工作表名稱（從後端傳遞）
-    var sheetNames = [];
+    <? 
+    var sheetNamesArray = sheetNames || [];
+    var sheetNamesJSON = JSON.stringify(sheetNamesArray);
+    ?>
+    var sheetNames = <?!= sheetNamesJSON ?>;
     
     // 兼容性檢測
     function checkBrowserCompatibility() {
@@ -1881,7 +1885,7 @@
         let errorMessage = '處理同音字時發生錯誤，請稍後重試';
         
         if (error.message) {
-          if (error.message.includes('API') || error.message.includes('fetch')) {
+          if (error.message.includes('google.script.run')) {
             errorMessage = '無法連接到同音字服務，請檢查網路連接或稍後重試';
           } else if (error.message.includes('timeout')) {
             errorMessage = '同音字服務響應超時，請稍後重試';
@@ -2428,156 +2432,6 @@
       FontManager.decreaseFontSize();
     }
     
-    // ==================== API 配置 ====================
-    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec';
-    
-    // 統一的 API 調用函數
-    async function callGASApi(action, params = {}) {
-      try {
-        const requestData = {
-          action: action,
-          ...params
-        };
-        
-        const response = await fetch(GAS_API_URL, {
-          method: 'POST',
-          mode: 'no-cors', // GAS 不支援 CORS，使用 no-cors
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestData)
-        });
-        
-        // no-cors 模式下無法讀取 response，改用 GET 方式
-        const paramsStr = new URLSearchParams({ action, ...params }).toString();
-        const getResponse = await fetch(GAS_API_URL + '?' + paramsStr, {
-          method: 'GET',
-          mode: 'no-cors'
-        });
-        
-        // 由於 no-cors 限制，我們需要另一種方式
-        // 使用 JSONP 或改用 GET 參數方式
-        return new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          const callbackName = 'gasCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-          
-          // 改用 GET 方式傳遞參數
-          const urlParams = new URLSearchParams({ action, ...params });
-          urlParams.append('callback', callbackName);
-          
-          window[callbackName] = function(result) {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            
-            if (result && result.success) {
-              resolve(result.data);
-            } else {
-              reject(new Error(result.error || 'API 調用失敗'));
-            }
-          };
-          
-          script.src = GAS_API_URL + '?' + urlParams.toString();
-          script.onerror = () => {
-            delete window[callbackName];
-            document.body.removeChild(script);
-            reject(new Error('網路請求失敗'));
-          };
-          
-          document.body.appendChild(script);
-          
-          // 超時處理
-          setTimeout(() => {
-            if (window[callbackName]) {
-              delete window[callbackName];
-              document.body.removeChild(script);
-              reject(new Error('請求超時'));
-            }
-          }, 30000);
-        });
-      } catch (error) {
-        console.error('API 調用錯誤:', error);
-        throw error;
-      }
-    }
-    
-    // 簡化的 API 調用（使用 GET 方式，處理 GAS CORS 限制）
-    async function callGASApiSimple(action, params = {}) {
-      try {
-        // 將參數轉換為 URL 查詢字符串
-        const urlParams = new URLSearchParams();
-        urlParams.append('action', action);
-        
-        // 將 params 對象的每個屬性添加到 URL 參數中
-        Object.keys(params).forEach(key => {
-          if (params[key] !== null && params[key] !== undefined) {
-            // 如果是對象或數組，轉為 JSON 字符串
-            if (typeof params[key] === 'object') {
-              urlParams.append(key, JSON.stringify(params[key]));
-            } else {
-              urlParams.append(key, params[key]);
-            }
-          }
-        });
-        
-        const url = GAS_API_URL + '?' + urlParams.toString();
-        
-        // GAS 不支援 CORS，但 Web App 部署後可以通過 GET 請求訪問
-        // 使用 no-cors 模式或直接請求
-        try {
-          // 方法 1：嘗試使用 fetch with no-cors（無法讀取回應，改用其他方式）
-          // 方法 2：使用 XMLHttpRequest 或 fetch 直接請求（GAS 會自動處理重定向）
-          const response = await fetch(url, {
-            method: 'GET',
-            redirect: 'follow',
-            // 不使用 CORS，讓瀏覽器直接請求（GAS Web App 支援）
-            credentials: 'omit'
-          });
-          
-          // 如果請求被阻止（CORS 錯誤），使用備用方案
-          if (!response || response.type === 'opaque') {
-            throw new Error('CORS 限制，需要使用其他方法');
-          }
-          
-          const text = await response.text();
-          
-          try {
-            const result = JSON.parse(text);
-            if (result.success) {
-              return result.data;
-            } else {
-              throw new Error(result.error || 'API 調用失敗');
-            }
-          } catch (parseError) {
-            // 如果回應不是 JSON，可能是 HTML 錯誤頁面
-            console.error('回應內容:', text.substring(0, 200));
-            
-            // 檢查是否是 GAS 的授權頁面
-            if (text.includes('需要授權') || text.includes('Authorization')) {
-              throw new Error('需要 Google 帳戶授權，請先訪問 GAS 應用程式完成授權');
-            }
-            
-            throw new Error('伺服器回應格式錯誤，請檢查 GAS 部署設置');
-          }
-        } catch (fetchError) {
-          // 如果 fetch 失敗（CORS 錯誤），使用 JSONP 作為備用方案
-          console.warn('Fetch 失敗，嘗試使用備用方法:', fetchError);
-          
-          return new Promise((resolve, reject) => {
-            // 使用動態 script 標籤（JSONP 方式）
-            const script = document.createElement('script');
-            const callbackName = 'gasApiCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            
-            // 注意：這需要 GAS 支援 JSONP，目前我們不使用這個方法
-            // 改用直接請求 GAS URL，因為 GAS Web App 已部署
-            reject(new Error('API 請求失敗，請檢查網路連接或 GAS 部署設置。錯誤：' + fetchError.message));
-          });
-        }
-      } catch (error) {
-        console.error('API 調用錯誤:', error);
-        throw error;
-      }
-    }
-
     // 動態載入相關函數
     let loadedSheets = new Set(); // 記錄已載入的工作表
     let sheetDataCache = {}; // 緩存工作表數據
@@ -2585,18 +2439,27 @@
     // 載入工作表名稱列表
     async function loadSheetNames() {
       try {
+
+        
         // 首先檢查是否有預載入的工作表名稱
         if (typeof sheetNames !== 'undefined' && sheetNames && sheetNames.length > 0) {
+
           return sheetNames;
         }
         
-        try {
-          const result = await callGASApiSimple('getAllSheetNames');
-          return result || [];
-        } catch (error) {
-          console.error('載入工作表名稱失敗:', error);
-          return [];
-        }
+        
+        
+        return new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(sheetNames => {
+              resolve(sheetNames || []);
+            })
+            .withFailureHandler(error => {
+              console.error('載入工作表名稱失敗:', error);
+              resolve([]);
+            })
+            .getAllSheetNames();
+        });
       } catch (error) {
         console.error('載入工作表名稱錯誤:', error);
         return [];
@@ -2608,50 +2471,59 @@
       try {
         console.log(`開始載入工作表標題行: ${sheetName}`);
         
-        const headerData = await callGASApiSimple('loadSheetHeaders', { sheetName });
-        console.log(`成功載入工作表標題行: ${sheetName}`);
-        
-        // 生成品名選項但不顯示內容
-        const chapterSelect = document.getElementById('chapterSelect');
-        chapterSelect.innerHTML = '<option value="">請選擇品名</option>';
-        
-        // 解析標題行獲取品名
-        if (headerData && headerData.length > 0) {
-          const headers = headerData[0];
-          let chapterCount = 0;
-          
-          // 遍歷奇數欄位（品名欄位）
-          for (let col = 0; col < headers.length; col += 2) {
-            if (headers[col] && headers[col].toString().trim()) {
-              const chapterTitle = headers[col].toString().trim();
-              const option = document.createElement('option');
-              option.value = chapterCount;
-              option.textContent = chapterTitle;
-              chapterSelect.appendChild(option);
-              chapterCount++;
-            }
-          }
-          
-          // 根據品名數量決定是否顯示選擇器
-          if (chapterCount <= 1) {
-            chapterSelect.style.display = 'none';
-            if (chapterCount === 1) {
-              // 只有一個品名時，自動載入完整數據
-              setTimeout(() => changeSutra(sheetName), 100);
-            }
-          } else {
-            chapterSelect.style.display = 'block';
-            // 多個品名時顯示提示
-            const contentDiv = document.getElementById('content');
-            contentDiv.innerHTML = `
-              <div style="text-align: center; padding: 50px; color: #666; font-size: 1.1em;">
-                <p>請從上方下拉選單選擇要閱讀的品名</p>
-              </div>
-            `;
-          }
-        }
-        
-        return headerData;
+        return new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(headerData => {
+              console.log(`成功載入工作表標題行: ${sheetName}`);
+              
+              // 生成品名選項但不顯示內容
+              const chapterSelect = document.getElementById('chapterSelect');
+              chapterSelect.innerHTML = '<option value="">請選擇品名</option>';
+              
+              // 解析標題行獲取品名
+              if (headerData && headerData.length > 0) {
+                const headers = headerData[0];
+                let chapterCount = 0;
+                
+                // 遍歷奇數欄位（品名欄位）
+                for (let col = 0; col < headers.length; col += 2) {
+                  if (headers[col] && headers[col].toString().trim()) {
+                    const chapterTitle = headers[col].toString().trim();
+                    const option = document.createElement('option');
+                    option.value = chapterCount;
+                    option.textContent = chapterTitle;
+                    chapterSelect.appendChild(option);
+                    chapterCount++;
+                  }
+                }
+                
+                // 根據品名數量決定是否顯示選擇器
+                if (chapterCount <= 1) {
+                  chapterSelect.style.display = 'none';
+                  if (chapterCount === 1) {
+                    // 只有一個品名時，自動載入完整數據
+                    setTimeout(() => changeSutra(sheetName), 100);
+                  }
+                } else {
+                  chapterSelect.style.display = 'block';
+                  // 多個品名時顯示提示
+                  const contentDiv = document.getElementById('content');
+                  contentDiv.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: #666; font-size: 1.1em;">
+                      <p>請從上方下拉選單選擇要閱讀的品名</p>
+                    </div>
+                  `;
+                }
+              }
+              
+              resolve(headerData);
+            })
+            .withFailureHandler(error => {
+              console.error(`載入工作表 ${sheetName} 標題行失敗:`, error);
+              reject(error);
+            })
+            .loadSheetHeaders(sheetName);
+        });
       } catch (error) {
         console.error(`載入工作表 ${sheetName} 標題行錯誤:`, error);
         throw error;
@@ -2666,16 +2538,20 @@
           return sheetDataCache[sheetName];
         }
 
-        try {
-          const data = await callGASApiSimple('loadSheetData', { sheetName });
-          // 緩存數據
-          sheetDataCache[sheetName] = data || [];
-          loadedSheets.add(sheetName);
-          return data || [];
-        } catch (error) {
-          console.error(`載入工作表 ${sheetName} 數據失敗:`, error);
-          return [];
-        }
+        return new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(data => {
+              // 緩存數據
+              sheetDataCache[sheetName] = data || [];
+              loadedSheets.add(sheetName);
+              resolve(data || []);
+            })
+            .withFailureHandler(error => {
+              console.error(`載入工作表 ${sheetName} 數據失敗:`, error);
+              resolve([]);
+            })
+            .loadSheetData(sheetName);
+        });
       } catch (error) {
         console.error(`載入工作表 ${sheetName} 數據錯誤:`, error);
         return [];
@@ -3873,10 +3749,12 @@
       });
     });
 
-    // 檢查 API 是否可用（用於兼容性檢查）
+    // 檢查 Google Apps Script 是否可用
     function isGoogleScriptAvailable() {
-      // 在 GitHub Pages 環境中，我們使用 fetch API
-      return typeof fetch !== 'undefined';
+      return typeof google !== 'undefined' && 
+             google.script && 
+             google.script.run && 
+             typeof google.script.run.getHomophoneDict === 'function';
     }
 
     // 優化添加同音字功能
@@ -4134,46 +4012,54 @@
         // 首次載入時顯示提示
         console.log(`正在載入同音字字典 - 品名: ${chapterTitle || '全域'}, 行號: ${lineNumber || '預設'}`);
 
-        try {
-          const result = await callGASApiSimple('getHomophoneDict', { 
-            chapterTitle, 
-            lineNumber 
-          });
-          
-          if (!result) {
-            if (!homophoneDictCache) homophoneDictCache = {};
-            homophoneDictCache[cacheKey] = {};
-            lastHomophoneDictFetch = now;
-            return {};
-          }
-          
-          if (typeof result !== 'object') {
-            if (!homophoneDictCache) homophoneDictCache = {};
-            homophoneDictCache[cacheKey] = {};
-            lastHomophoneDictFetch = now;
-            return {};
-          }
-          
-          const keys = Object.keys(result);
-          
-          if (keys.length === 0) {
-            if (!homophoneDictCache) homophoneDictCache = {};
-            homophoneDictCache[cacheKey] = {};
-            lastHomophoneDictFetch = now;
-            return {};
-          }
-          
-          if (!homophoneDictCache) homophoneDictCache = {};
-          homophoneDictCache[cacheKey] = result;
-          lastHomophoneDictFetch = now;
-          return result;
-        } catch (error) {
-          console.error('同音字服務調用失敗:', error);
-          if (!homophoneDictCache) homophoneDictCache = {};
-          homophoneDictCache[cacheKey] = {};
-          lastHomophoneDictFetch = now;
-          return {};
-        }
+        return new Promise((resolve, reject) => {
+          // 添加超時處理
+          const timeout = setTimeout(() => {
+            reject(new Error('同音字服務響應超時'));
+          }, 10000); // 10秒超時
+
+          google.script.run
+            .withSuccessHandler((result) => {
+              clearTimeout(timeout);
+              
+              if (!result) {
+                if (!homophoneDictCache) homophoneDictCache = {};
+                homophoneDictCache[cacheKey] = {};
+                lastHomophoneDictFetch = now;
+                resolve({});
+                return;
+              }
+              
+              if (typeof result !== 'object') {
+                if (!homophoneDictCache) homophoneDictCache = {};
+                homophoneDictCache[cacheKey] = {};
+                lastHomophoneDictFetch = now;
+                resolve({});
+                return;
+              }
+              
+              const keys = Object.keys(result);
+              
+              if (keys.length === 0) {
+                if (!homophoneDictCache) homophoneDictCache = {};
+                homophoneDictCache[cacheKey] = {};
+                lastHomophoneDictFetch = now;
+                resolve({});
+                return;
+              }
+              
+              if (!homophoneDictCache) homophoneDictCache = {};
+              homophoneDictCache[cacheKey] = result;
+              lastHomophoneDictFetch = now;
+              resolve(result);
+            })
+            .withFailureHandler((error) => {
+              clearTimeout(timeout);
+              console.error('同音字服務調用失敗:', error);
+              reject(new Error(`同音字服務錯誤: ${error.message || error}`));
+            })
+            .getHomophoneDict(chapterTitle, lineNumber);
+        });
       } catch (error) {
         console.error('獲取同音字字典時發生錯誤:', error);
         throw error;
@@ -4183,18 +4069,35 @@
     // 獲取完整同音字字典結構
     async function getFullHomophoneDict() {
       try {
-        try {
-          const result = await callGASApiSimple('getFullHomophoneDict');
-          
-          if (!result || typeof result !== 'object') {
-            return {};
-          }
-          
-          return result;
-        } catch (error) {
-          console.error('獲取完整同音字字典失敗:', error);
-          return {};
-        }
+        return new Promise((resolve, reject) => {
+          // 添加超時處理
+          const timeout = setTimeout(() => {
+            reject(new Error('同音字服務響應超時'));
+          }, 10000); // 10秒超時
+
+          google.script.run
+            .withSuccessHandler((result) => {
+              clearTimeout(timeout);
+              
+              if (!result) {
+                resolve({});
+                return;
+              }
+              
+              if (typeof result !== 'object') {
+                resolve({});
+                return;
+              }
+              
+              resolve(result);
+            })
+            .withFailureHandler((error) => {
+              clearTimeout(timeout);
+              console.error('獲取完整同音字字典失敗:', error);
+              reject(new Error(`同音字服務錯誤: ${error.message || error}`));
+            })
+            .getFullHomophoneDict();
+        });
       } catch (error) {
         console.error('獲取完整同音字字典時發生錯誤:', error);
         throw error;
@@ -4315,7 +4218,7 @@
     let lastSavedProgress = null;
 
     // 自動保存閱讀進度（當用戶點擊經文行時）
-    async function saveProgress(lineElement) {
+    function saveProgress(lineElement) {
       if (!lineElement) return;
       
       const currentSutra = document.getElementById('sutraSelect').value;
@@ -4334,32 +4237,29 @@
       
       lastSavedProgress = progressKey;
       
-      try {
-        await callGASApiSimple('saveReadingProgress', {
-          sheetName: currentSutra,
-          chapterIndex: chapterIndex,
-          lineNumber: lineNumber
-        });
-        console.log('閱讀進度已保存');
-      } catch (error) {
-        console.error('保存閱讀進度失敗:', error);
-      }
+      google.script.run
+        .withSuccessHandler(() => {
+          console.log('閱讀進度已保存');
+        })
+        .withFailureHandler((error) => {
+          console.error('保存閱讀進度失敗:', error);
+        })
+        .saveReadingProgress(currentSutra, chapterIndex, lineNumber);
     }
 
     // 恢復閱讀進度
-    async function restoreReadingProgress() {
-      try {
-        const progress = await callGASApiSimple('getReadingProgress');
-        
-        if (!progress || !progress.current) {
-          alert('沒有保存的閱讀進度');
-          return;
-        }
+    function restoreReadingProgress() {
+      google.script.run
+        .withSuccessHandler((progress) => {
+          if (!progress || !progress.current) {
+            alert('沒有保存的閱讀進度');
+            return;
+          }
           
-        const currentData = progress.current;
-        
-        // 確認是否要跳轉
-        if (confirm(`是否要跳轉到上次閱讀位置？\n經文：${currentData.sheetName}\n行號：${currentData.lineNumber}`)) {
+          const currentData = progress.current;
+          
+          // 確認是否要跳轉
+          if (confirm(`是否要跳轉到上次閱讀位置？\n經文：${currentData.sheetName}\n行號：${currentData.lineNumber}`)) {
             // 切換到對應的經文
             const sutraSelect = document.getElementById('sutraSelect');
             if (sutraSelect.value !== currentData.sheetName) {
@@ -4410,10 +4310,12 @@
               }, 500);
             }
           }
-      } catch (error) {
-        console.error('恢復閱讀進度失敗:', error);
-        alert('恢復閱讀進度失敗：' + error.message);
-      }
+        })
+        .withFailureHandler((error) => {
+          console.error('獲取閱讀進度失敗:', error);
+          alert('獲取閱讀進度失敗：' + error.message);
+        })
+        .getReadingProgress();
     }
 
     // ==================== 書籤功能 ====================
@@ -4422,10 +4324,16 @@
     // 載入書籤並標記
     async function loadBookmarks() {
       try {
-        const bookmarks = await callGASApiSimple('getAllBookmarks');
-        bookmarksCache = bookmarks || [];
+        const bookmarks = await new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getAllBookmarks();
+        });
+        
+        bookmarksCache = bookmarks;
         markBookmarkedLines();
-        return bookmarks || [];
+        return bookmarks;
       } catch (error) {
         console.error('載入書籤失敗:', error);
         return [];
@@ -4475,7 +4383,7 @@
     }
 
     // 添加書籤
-    async function addBookmarkToLine(lineElement) {
+    function addBookmarkToLine(lineElement) {
       if (!lineElement) return;
       
       const currentSutra = document.getElementById('sutraSelect').value;
@@ -4492,54 +4400,49 @@
       const textElement = lineElement.querySelector('.original-text');
       const lineText = textElement ? (textElement.textContent || textElement.innerText) : '';
       
-      try {
-        const result = await callGASApiSimple('addBookmark', {
-          sheetName: currentSutra,
-          chapterIndex: chapterIndex,
-          chapterTitle: chapterTitle,
-          lineNumber: lineNumber,
-          lineText: lineText
-        });
-        
-        if (result && result.success) {
-          alert('書籤已添加');
-          loadBookmarks(); // 重新載入書籤
-        } else {
-          alert(result && result.message || '添加書籤失敗');
-        }
-      } catch (error) {
-        console.error('添加書籤失敗:', error);
-        alert('添加書籤失敗：' + error.message);
-      }
+      google.script.run
+        .withSuccessHandler((result) => {
+          if (result.success) {
+            alert('書籤已添加');
+            loadBookmarks(); // 重新載入書籤
+          } else {
+            alert(result.message);
+          }
+        })
+        .withFailureHandler((error) => {
+          console.error('添加書籤失敗:', error);
+          alert('添加書籤失敗：' + error.message);
+        })
+        .addBookmark(currentSutra, chapterIndex, chapterTitle, lineNumber, lineText);
     }
 
     // 刪除書籤
-    async function deleteBookmarkById(bookmarkId) {
-      try {
-        const result = await callGASApiSimple('deleteBookmark', { bookmarkId });
-        
-        if (result && result.success) {
-          alert('書籤已刪除');
-          loadBookmarks(); // 重新載入書籤
-          showBookmarks(); // 刷新書籤列表
-        } else {
-          alert(result && result.message || '刪除書籤失敗');
-        }
-      } catch (error) {
-        console.error('刪除書籤失敗:', error);
-        alert('刪除書籤失敗：' + error.message);
-      }
+    function deleteBookmarkById(bookmarkId) {
+      google.script.run
+        .withSuccessHandler((result) => {
+          if (result.success) {
+            alert('書籤已刪除');
+            loadBookmarks(); // 重新載入書籤
+            showBookmarks(); // 刷新書籤列表
+          } else {
+            alert(result.message);
+          }
+        })
+        .withFailureHandler((error) => {
+          console.error('刪除書籤失敗:', error);
+          alert('刪除書籤失敗：' + error.message);
+        })
+        .deleteBookmark(bookmarkId);
     }
 
     // 顯示書籤管理界面
-    async function showBookmarks() {
-      try {
-        const bookmarks = await callGASApiSimple('getAllBookmarks');
-        
-        if (!bookmarks || bookmarks.length === 0) {
-          alert('目前沒有書籤');
-          return;
-        }
+    function showBookmarks() {
+      google.script.run
+        .withSuccessHandler((bookmarks) => {
+          if (!bookmarks || bookmarks.length === 0) {
+            alert('目前沒有書籤');
+            return;
+          }
           
           let bookmarkList = '書籤列表：\n\n';
           bookmarks.forEach((bookmark, index) => {
@@ -4592,10 +4495,12 @@
               });
             }
           }
-      } catch (error) {
-        console.error('獲取書籤失敗:', error);
-        alert('獲取書籤失敗：' + error.message);
-      }
+        })
+        .withFailureHandler((error) => {
+          console.error('獲取書籤失敗:', error);
+          alert('獲取書籤失敗：' + error.message);
+        })
+        .getAllBookmarks();
     }
 
     // 切換書籤（手機版按鈕或電腦版快捷鍵）
