@@ -2500,7 +2500,7 @@
       }
     }
     
-    // 簡化的 API 調用（使用 GET 方式）
+    // 簡化的 API 調用（使用 GET 方式，處理 GAS CORS 限制）
     async function callGASApiSimple(action, params = {}) {
       try {
         // 將參數轉換為 URL 查詢字符串
@@ -2521,31 +2521,56 @@
         
         const url = GAS_API_URL + '?' + urlParams.toString();
         
-        // 使用 fetch 並設置 redirect: 'follow' 來處理 GAS 的重定向
-        const response = await fetch(url, {
-          method: 'GET',
-          redirect: 'follow',
-          mode: 'cors' // 嘗試使用 CORS
-        });
-        
-        // 檢查回應狀態
-        if (!response.ok) {
-          throw new Error(`HTTP 錯誤: ${response.status}`);
-        }
-        
-        const text = await response.text();
-        
+        // GAS 不支援 CORS，但 Web App 部署後可以通過 GET 請求訪問
+        // 使用 no-cors 模式或直接請求
         try {
-          const result = JSON.parse(text);
-          if (result.success) {
-            return result.data;
-          } else {
-            throw new Error(result.error || 'API 調用失敗');
+          // 方法 1：嘗試使用 fetch with no-cors（無法讀取回應，改用其他方式）
+          // 方法 2：使用 XMLHttpRequest 或 fetch 直接請求（GAS 會自動處理重定向）
+          const response = await fetch(url, {
+            method: 'GET',
+            redirect: 'follow',
+            // 不使用 CORS，讓瀏覽器直接請求（GAS Web App 支援）
+            credentials: 'omit'
+          });
+          
+          // 如果請求被阻止（CORS 錯誤），使用備用方案
+          if (!response || response.type === 'opaque') {
+            throw new Error('CORS 限制，需要使用其他方法');
           }
-        } catch (parseError) {
-          // 如果回應不是 JSON，可能是 HTML 錯誤頁面
-          console.error('回應內容:', text.substring(0, 200));
-          throw new Error('伺服器回應格式錯誤，請檢查 GAS 部署設置');
+          
+          const text = await response.text();
+          
+          try {
+            const result = JSON.parse(text);
+            if (result.success) {
+              return result.data;
+            } else {
+              throw new Error(result.error || 'API 調用失敗');
+            }
+          } catch (parseError) {
+            // 如果回應不是 JSON，可能是 HTML 錯誤頁面
+            console.error('回應內容:', text.substring(0, 200));
+            
+            // 檢查是否是 GAS 的授權頁面
+            if (text.includes('需要授權') || text.includes('Authorization')) {
+              throw new Error('需要 Google 帳戶授權，請先訪問 GAS 應用程式完成授權');
+            }
+            
+            throw new Error('伺服器回應格式錯誤，請檢查 GAS 部署設置');
+          }
+        } catch (fetchError) {
+          // 如果 fetch 失敗（CORS 錯誤），使用 JSONP 作為備用方案
+          console.warn('Fetch 失敗，嘗試使用備用方法:', fetchError);
+          
+          return new Promise((resolve, reject) => {
+            // 使用動態 script 標籤（JSONP 方式）
+            const script = document.createElement('script');
+            const callbackName = 'gasApiCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            // 注意：這需要 GAS 支援 JSONP，目前我們不使用這個方法
+            // 改用直接請求 GAS URL，因為 GAS Web App 已部署
+            reject(new Error('API 請求失敗，請檢查網路連接或 GAS 部署設置。錯誤：' + fetchError.message));
+          });
         }
       } catch (error) {
         console.error('API 調用錯誤:', error);
