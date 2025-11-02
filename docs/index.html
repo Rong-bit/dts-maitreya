@@ -3,93 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0; url=https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec">
-    <title>正在跳轉到佛經閱讀系統...</title>
+    <title>妙華蓮華經 - 佛經閱讀系統</title>
     <style>
-        body {
-            font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "Microsoft JhengHei", "微軟正黑體", "PingFang TC", sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-        }
-        .container {
-            text-align: center;
             padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            text-align: center;
         }
-        h1 {
-            margin-bottom: 20px;
+        
+        header h1 {
             font-size: 2.5em;
+            margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
-        p {
+        
+        header p {
             font-size: 1.2em;
-            margin: 10px 0;
+            opacity: 0.9;
         }
-        a {
-            color: #fff;
-            text-decoration: underline;
-            font-weight: bold;
-            transition: opacity 0.3s;
+        
+        .content {
+            padding: 40px;
         }
-        a:hover {
-            opacity: 0.8;
-        }
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .button {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 15px 30px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid white;
+        
+        .app-frame {
+            width: 100%;
+            height: 800px;
+            border: none;
             border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin: 30px 0;
+        }
+        
+        .access-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .access-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2em;
             font-weight: bold;
-            transition: all 0.3s;
+            margin: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
-        .button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
+        
+        .access-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .notice {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+            
+            .app-frame {
+                height: 600px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌐 正在跳轉...</h1>
-        <div class="spinner"></div>
-        <p>正在為您跳轉到佛經閱讀系統</p>
-        <p>如果沒有自動跳轉，請點擊下方按鈕：</p>
-        <a href="https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec" class="button">立即訪問應用程式 →</a>
-    </div>
-    <script>
-        // 備用跳轉方案（如果 meta refresh 失敗）
-        setTimeout(function() {
-            window.location.href = 'https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec';
-        }, 500);
+        <header>
+            <h1>🌐 妙華蓮華經 - 佛經閱讀系統</h1>
+            <p>基於 Google Apps Script 開發的智能佛經閱讀與翻譯系統</p>
+        </header>
         
-        // 記錄訪問（可選）
-        console.log('從 GitHub 倉庫跳轉到應用程式');
-    </script>
+        <div class="content">
+            <div class="notice">
+                <strong>📌 說明：</strong>此應用程式需要後端服務（Google Apps Script），無法直接在 GitHub Pages 上完整運行。下方提供了實際應用程式的嵌入視圖和訪問連結。
+            </div>
+            
+            <div class="access-section">
+                <h2>🚀 立即訪問完整應用程式</h2>
+                <p style="margin: 20px 0;">點擊下方按鈕在新視窗中打開完整功能版本：</p>
+                <a href="https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec" 
+                   target="_blank" 
+                   class="access-button">
+                    ✨ 開啟完整應用程式 →
+                </a>
+            </div>
+            
+            <h2 style="margin-top: 40px; margin-bottom: 20px;">📱 應用程式預覽</h2>
+            <p style="margin-bottom: 20px; color: #666;">下方為應用程式的嵌入視圖（部分功能可能受限）：</p>
+            <iframe 
+                src="https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec"
+                class="app-frame"
+                title="佛經閱讀系統"
+                loading="lazy">
+            </iframe>
+            
+            <h2 style="margin-top: 40px; margin-bottom: 20px;">✨ 功能特色</h2>
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">📖</div>
+                    <h3>經文閱讀</h3>
+                    <p>清晰易讀的經文顯示介面</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔊</div>
+                    <h3>語音朗讀</h3>
+                    <p>支援多種語音的智能朗讀</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔤</div>
+                    <h3>同音字顯示</h3>
+                    <p>便捷的同音字查詢功能</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI 翻譯</h3>
+                    <p>使用 Gemini AI 的智能翻譯</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>全文搜尋</h3>
+                    <p>快速搜尋經文內容</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📑</div>
+                    <h3>書籤管理</h3>
+                    <p>標記和保存重要經文</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2025 妙華蓮華經 - 佛經閱讀系統</p>
+            <p style="margin-top: 10px;">
+                <a href="https://github.com/Rong-bit/dts-maitreya" style="color: #fff; text-decoration: underline;">GitHub 倉庫</a> | 
+                <a href="https://script.google.com/macros/s/AKfycbxzWiK-jRfWXS2M9AuIFG3rK0_GveXn3UvtEWhu3Yv2M3HD-ZvWSJQ4miEi5-WdOANsqQ/exec" 
+                   style="color: #fff; text-decoration: underline;" 
+                   target="_blank">線上版本</a>
+            </p>
+        </footer>
+    </div>
 </body>
 </html>
 
