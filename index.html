@@ -1411,13 +1411,31 @@
     </div>
   </div>
 
+  <!-- Google Apps Script 模板數據注入 -->
+  <script id="template-data" type="application/json"><?!= JSON.stringify(sheetNames || []) ?></script>
+  
   <script>
     // 預載入的工作表名稱（從後端傳遞）
-    <? 
-    var sheetNamesArray = sheetNames || [];
-    var sheetNamesJSON = JSON.stringify(sheetNamesArray);
-    ?>
-    var sheetNames = <?!= sheetNamesJSON ?>;
+    // 從模板數據中讀取，如果模板未處理則使用默認值
+    var sheetNames = [];
+    try {
+      var templateDataEl = document.getElementById('template-data');
+      if (templateDataEl && templateDataEl.textContent && templateDataEl.textContent.trim()) {
+        var templateContent = templateDataEl.textContent.trim();
+        // 檢查是否包含模板語法（未處理的情況）
+        if (templateContent.indexOf('<?!=') === -1) {
+          sheetNames = JSON.parse(templateContent);
+        } else {
+          // 模板語法未被處理，使用默認值
+          console.warn('模板語法未處理，使用默認值');
+          sheetNames = [];
+        }
+      }
+    } catch (e) {
+      console.warn('讀取模板數據失敗，使用默認值:', e);
+      sheetNames = [];
+    }
+    console.log('從模板載入的工作表名稱:', sheetNames);
     
     // 兼容性檢測
     function checkBrowserCompatibility() {
@@ -2439,19 +2457,20 @@
     // 載入工作表名稱列表
     async function loadSheetNames() {
       try {
-
+        console.log('loadSheetNames 開始執行');
+        console.log('當前 sheetNames 變數:', typeof sheetNames !== 'undefined' ? sheetNames : '未定義');
         
         // 首先檢查是否有預載入的工作表名稱
         if (typeof sheetNames !== 'undefined' && sheetNames && sheetNames.length > 0) {
-
+          console.log('使用預載入的工作表名稱:', sheetNames);
           return sheetNames;
         }
         
-        
-        
+        console.log('從 API 載入工作表名稱');
         return new Promise((resolve, reject) => {
           google.script.run
             .withSuccessHandler(sheetNames => {
+              console.log('從 API 獲得工作表名稱:', sheetNames);
               resolve(sheetNames || []);
             })
             .withFailureHandler(error => {
